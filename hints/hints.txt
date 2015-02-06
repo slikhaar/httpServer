@@ -1,0 +1,31 @@
+
+HINT-1
+
+static class SimpleFileHandler implements HttpHandler {
+    @Override
+    public void handle(HttpExchange he) throws IOException {
+      File file = new File(contentFolder + "index.html");
+      byte[] bytesToSend = new byte[(int) file.length()];
+      try {
+        BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
+        bis.read(bytesToSend, 0, bytesToSend.length);
+      } catch (IOException ie) {
+        System.out.println(ie);
+      }
+      he.sendResponseHeaders(200, bytesToSend.length);
+      try (OutputStream os = he.getResponseBody()) {
+        os.write(bytesToSend, 0, bytesToSend.length);
+      }
+    }
+  }
+
+
+HINT-2
+
+<target name="-post-compile">
+  <copy file="startServer.bat" todir="${dist.dir}"/>
+  <mkdir dir="${dist.dir}/public"/>      
+  <copy todir="${dist.dir}/public">  
+     <fileset dir="public"/>
+  </copy>
+</target>
