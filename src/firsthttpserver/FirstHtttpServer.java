@@ -13,6 +13,7 @@ import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Scanner;
 
 /**
  * @author Lars Mortensen
@@ -33,6 +34,7 @@ public class FirstHtttpServer {
 //        server.createContext("/files", new SimpleFileHandler());
         server.createContext("/headers", new HeadersHandler());
         server.createContext("/pages/", new SimpleFileHandler());
+        server.createContext("/Parameters/", new ParametersHandler());
         server.setExecutor(null); // Use the default executor
         server.start();
         System.out.println("Server started, listening on port: " + port);
@@ -125,11 +127,9 @@ public class FirstHtttpServer {
 
     static class SimpleFileHandler implements HttpHandler {
 
-        
-
         @Override
         public void handle(HttpExchange he) throws IOException {
-            
+
             String contentFolder = "public/";
             File file = new File(contentFolder + "index.html");
             byte[] bytesToSend = new byte[(int) file.length()];
@@ -142,6 +142,48 @@ public class FirstHtttpServer {
             he.sendResponseHeaders(200, bytesToSend.length);
             try (OutputStream os = he.getResponseBody()) {
                 os.write(bytesToSend, 0, bytesToSend.length);
+            }
+        }
+
+    }
+
+    static class ParametersHandler implements HttpHandler {
+
+        @Override
+        public void handle(HttpExchange he) throws IOException {
+            String method = he.getRequestMethod();
+            String response = "";
+            StringBuilder sb = new StringBuilder();
+            sb.append("<!DOCTYPE html>\n");
+            sb.append("<html>\n");
+            sb.append("<head>\n");
+            sb.append("<title>My fancy Web Site</title>\n");
+            sb.append("<meta charset='UTF-8'>\n");
+            sb.append("</head>\n");
+            sb.append("<body>\n");
+            sb.append("<h2>Parameters</h2>\n");
+
+            System.out.println("Method is: " + he.getRequestMethod());
+
+            if (he.getRequestMethod().equals("GET")) {
+                sb.append(he.getRequestURI().getQuery());
+            } else if  (he.getRequestMethod().equals("POST")){
+                Scanner scan = new Scanner(he.getRequestBody());
+                while (scan.hasNext()) {
+                    sb.append("Request body, with Post-parameters: " + scan.nextLine());
+                    sb.append("</br>");
+                }
+
+            }
+
+            sb.append("</body>\n");
+            sb.append("</html>\n");
+            response = sb.toString();
+            Headers h = he.getResponseHeaders();
+            h.add("Content-Type", "text/html");
+            he.sendResponseHeaders(200, response.length());
+            try (PrintWriter pw = new PrintWriter(he.getResponseBody())) {
+                pw.print(response); //What happens if we use a println instead of print --> Explain
             }
         }
 
