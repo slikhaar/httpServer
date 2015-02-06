@@ -4,10 +4,13 @@ import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.InetSocketAddress;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -29,6 +32,7 @@ public class FirstHtttpServer {
         server.createContext("/welcome", new RequestHandler());
 //        server.createContext("/files", new SimpleFileHandler());
         server.createContext("/headers", new HeadersHandler());
+        server.createContext("/pages/", new SimpleFileHandler());
         server.setExecutor(null); // Use the default executor
         server.start();
         System.out.println("Server started, listening on port: " + port);
@@ -87,13 +91,13 @@ public class FirstHtttpServer {
             sb2.append("</tr>");
 
             System.out.println("Size: " + h1.entrySet().size());
-            
-            for (Entry<String, List<String>> entry : h1.entrySet()) { 
+
+            for (Entry<String, List<String>> entry : h1.entrySet()) {
                 String key = entry.getKey();
                 List<String> value = entry.getValue();
 
                 System.out.println("in looop");
-                
+
                 sb2.append("<tr>");
                 sb2.append("<td>");
                 sb2.append(key);
@@ -101,9 +105,9 @@ public class FirstHtttpServer {
                 sb2.append("<td>");
                 sb2.append(value);
                 sb2.append("</td>");
-                sb2.append("</tr>");                
+                sb2.append("</tr>");
             }
-            
+
             System.out.println("After loop");
 
             sb2.append("</table>");
@@ -118,6 +122,31 @@ public class FirstHtttpServer {
 
         }
     }
+
+    static class SimpleFileHandler implements HttpHandler {
+
+        
+
+        @Override
+        public void handle(HttpExchange he) throws IOException {
+            
+            String contentFolder = "public/";
+            File file = new File(contentFolder + "index.html");
+            byte[] bytesToSend = new byte[(int) file.length()];
+            try {
+                BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
+                bis.read(bytesToSend, 0, bytesToSend.length);
+            } catch (IOException ie) {
+                ie.printStackTrace();
+            }
+            he.sendResponseHeaders(200, bytesToSend.length);
+            try (OutputStream os = he.getResponseBody()) {
+                os.write(bytesToSend, 0, bytesToSend.length);
+            }
+        }
+
+    }
+
 }
 
 /*static class SimpleFileHandler implements HttpHandler {
